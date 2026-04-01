@@ -1,6 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+const ADMIN_EMAIL = 'admin@umascrm.com';
+const ADMIN_PASSWORD = 'admin123';
+const ADMIN_NAME = 'Admin';
+
+async function ensureAdminUser() {
+  try {
+    const existing = await db.user.findUnique({ where: { email: ADMIN_EMAIL } });
+    if (!existing) {
+      await db.user.create({
+        data: {
+          name: ADMIN_NAME,
+          email: ADMIN_EMAIL,
+          password: ADMIN_PASSWORD,
+          role: 'admin',
+        },
+      });
+      console.log('Created default admin user');
+    }
+  } catch (err) {
+    console.error('Failed to ensure admin user:', err);
+  }
+}
+
+let adminChecked = false;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -11,6 +36,11 @@ export async function POST(request: NextRequest) {
         { error: 'Email and password are required' },
         { status: 400 }
       );
+    }
+
+    if (!adminChecked) {
+      await ensureAdminUser();
+      adminChecked = true;
     }
 
     const user = await db.user.findUnique({
