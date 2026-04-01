@@ -1,4 +1,6 @@
-import { db } from '../src/lib/db';
+import { PrismaClient } from '@prisma/client'
+
+const db = new PrismaClient()
 
 const MONTHS_BACK = 6;
 
