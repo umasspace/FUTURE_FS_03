@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const db = new PrismaClient()
 
@@ -35,11 +36,12 @@ export async function seedDatabase() {
   console.log('🗑️  Cleared existing data');
 
   // ─── ADMIN USER ───
+  const hashedPassword = await bcrypt.hash('admin123', 10);
   await db.user.create({
     data: {
       name: 'Admin',
       email: 'admin@umascrm.com',
-      password: 'admin123',
+      password: hashedPassword,
       role: 'admin',
     },
   });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { seedDatabase } from '../../../../../prisma/seed';
+import bcrypt from 'bcryptjs';
 
 const ADMIN_EMAIL = 'admin@umascrm.com';
 const ADMIN_PASSWORD = 'admin123';
@@ -15,15 +16,16 @@ async function ensureDatabaseReady() {
     }
   } catch (err) {
     console.error('Failed to seed database:', err);
-    // Fallback: just create admin user
+    // Fallback: just create admin user with hashed password
     try {
       const existing = await db.user.findUnique({ where: { email: ADMIN_EMAIL } });
       if (!existing) {
+        const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
         await db.user.create({
           data: {
             name: ADMIN_NAME,
             email: ADMIN_EMAIL,
-            password: ADMIN_PASSWORD,
+            password: hashedPassword,
             role: 'admin',
           },
         });
@@ -58,7 +60,15 @@ export async function POST(request: NextRequest) {
       where: { email },
     });
 
-    if (!user || user.password !== password) {
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
