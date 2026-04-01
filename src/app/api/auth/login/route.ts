@@ -1,30 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { seedDatabase } from '../../../../../prisma/seed';
 
 const ADMIN_EMAIL = 'admin@umascrm.com';
 const ADMIN_PASSWORD = 'admin123';
 const ADMIN_NAME = 'Admin';
 
-async function ensureAdminUser() {
+async function ensureDatabaseReady() {
   try {
-    const existing = await db.user.findUnique({ where: { email: ADMIN_EMAIL } });
-    if (!existing) {
-      await db.user.create({
-        data: {
-          name: ADMIN_NAME,
-          email: ADMIN_EMAIL,
-          password: ADMIN_PASSWORD,
-          role: 'admin',
-        },
-      });
-      console.log('Created default admin user');
+    const userCount = await db.user.count();
+    if (userCount === 0) {
+      await seedDatabase();
+      console.log('Database seeded on first access');
     }
   } catch (err) {
-    console.error('Failed to ensure admin user:', err);
+    console.error('Failed to seed database:', err);
+    // Fallback: just create admin user
+    try {
+      const existing = await db.user.findUnique({ where: { email: ADMIN_EMAIL } });
+      if (!existing) {
+        await db.user.create({
+          data: {
+            name: ADMIN_NAME,
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
+            role: 'admin',
+          },
+        });
+        console.log('Created default admin user (fallback)');
+      }
+    } catch (err2) {
+      console.error('Failed to create admin user:', err2);
+    }
   }
 }
 
-let adminChecked = false;
+let dbChecked = false;
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,9 +49,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!adminChecked) {
-      await ensureAdminUser();
-      adminChecked = true;
+    if (!dbChecked) {
+      await ensureDatabaseReady();
+      dbChecked = true;
     }
 
     const user = await db.user.findUnique({
