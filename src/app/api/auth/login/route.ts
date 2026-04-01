@@ -1,43 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { seedDatabase } from '../../../../../prisma/seed';
 import bcrypt from 'bcryptjs';
 
 const ADMIN_EMAIL = 'admin@umascrm.com';
 const ADMIN_PASSWORD = 'admin123';
 const ADMIN_NAME = 'Admin';
 
-async function ensureDatabaseReady() {
-  try {
-    const userCount = await db.user.count();
-    if (userCount === 0) {
-      await seedDatabase();
-      console.log('Database seeded on first access');
-    }
-  } catch (err) {
-    console.error('Failed to seed database:', err);
-    // Fallback: just create admin user with hashed password
-    try {
-      const existing = await db.user.findUnique({ where: { email: ADMIN_EMAIL } });
-      if (!existing) {
-        const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
-        await db.user.create({
-          data: {
-            name: ADMIN_NAME,
-            email: ADMIN_EMAIL,
-            password: hashedPassword,
-            role: 'admin',
-          },
-        });
-        console.log('Created default admin user (fallback)');
-      }
-    } catch (err2) {
-      console.error('Failed to create admin user:', err2);
-    }
+async function ensureAdmin() {
+  const existing = await db.user.findUnique({ where: { email: ADMIN_EMAIL } });
+  if (!existing) {
+    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
+    await db.user.create({
+      data: {
+        name: ADMIN_NAME,
+        email: ADMIN_EMAIL,
+        password: hashedPassword,
+        role: 'admin',
+      },
+    });
   }
 }
-
-let dbChecked = false;
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,10 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!dbChecked) {
-      await ensureDatabaseReady();
-      dbChecked = true;
-    }
+    await ensureAdmin();
 
     const user = await db.user.findUnique({
       where: { email },

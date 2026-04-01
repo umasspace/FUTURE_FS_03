@@ -42,7 +42,11 @@ export const useCrmStore = create<CrmState>()(
       setDashboardSearch: (query) => set({ dashboardSearch: query }),
       // Auth
       user: null,
-      login: (user) => set({ user }),
+      login: (user) => {
+        set({ user });
+        // Auto-seed database in background on first login
+        fetch('/api/seed', { method: 'POST' }).catch(() => {});
+      },
       logout: () => set({ user: null, currentView: 'dashboard' }),
     }),
     {
