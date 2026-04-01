@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "umasCRM",
     description: "Customer Relationship Management for growing businesses",
-    url: "https://chat.z.ai",
+    url: "https://umascrm1.vercel.app/",
     siteName: "umasCRM",
     type: "website",
   },
