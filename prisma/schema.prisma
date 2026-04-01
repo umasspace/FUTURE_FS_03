@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("admin") // admin, manager, user
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Contact {
+  id         String     @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String     @unique
+  phone      String?
+  jobTitle   String?
+  status     String     @default("lead") // lead, prospect, customer, inactive
+  avatar     String?
+  notes      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  company    Company?   @relation(fields: [companyId], references: [id])
+  companyId  String?
+
+  deals      Deal[]
+  tasks      Task[]
+  activities Activity[]
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  industry    String?
+  website     String?
+  employees      Int?
+  annualRevenue  Float?
+  description    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contacts    Contact[]
+  deals       Deal[]
+}
+
+model Deal {
+  id                String   @id @default(cuid())
+  title             String
+  value             Float    @default(0)
+  stage             String   @default("lead") // lead, qualified, proposal, negotiation, closed_won, closed_lost
+  probability       Int      @default(20)
+  expectedCloseDate DateTime?
+  description       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  contact    Contact? @relation(fields: [contactId], references: [id])
+  contactId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
+  companyId  String?
+
+  tasks      Task[]
+  activities Activity[]
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("todo") // todo, in_progress, completed, cancelled
+  priority    String   @default("medium") // low, medium, high, urgent
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contact    Contact? @relation(fields: [contactId], references: [id])
+  contactId  String?
+  deal       Deal?    @relation(fields: [dealId], references: [id])
+  dealId     String?
+
+  activities Activity[]
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  type        String   // call, email, meeting, note, deal_update, task_update
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  contact    Contact? @relation(fields: [contactId], references: [id])
+  contactId  String?
+  deal       Deal?    @relation(fields: [dealId], references: [id])
+  dealId     String?
+  task       Task?    @relation(fields: [taskId], references: [id])
+  taskId     String?
+}
