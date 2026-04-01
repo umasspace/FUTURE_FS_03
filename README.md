@@ -1,6 +1,12 @@
 # umasCRM
 
-A modern CRM application built with Next.js 16, Tailwind CSS 4, shadcn/ui, Prisma, and SQLite.
+> **⚠️ First Time Login Instructions:**
+> 1. Enter credentials and click **Sign In**
+> 2. If login fails, try clicking **Sign In** again (2-3 times)
+> 3. After successful login, **reload the page** once
+> 4. All demo data (contacts, companies, deals, tasks) will now appear
+
+A modern CRM application built with Next.js 16, Tailwind CSS 4, shadcn/ui, Prisma, and PostgreSQL.
 
 ## Features
 
